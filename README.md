@@ -1,5 +1,5 @@
 # CircleMenu
-仿空调按钮。 仿建行旋转菜单。
+仿空调按钮。 仿建行旋转菜单。<br> 
 ![](https://github.com/FantasyEngineer/CircleMenu/blob/master/demo.gif)  
-\<br> 
+<br> 
 ![](https://github.com/FantasyEngineer/CircleMenu/blob/master/jianhang1.gif)  
