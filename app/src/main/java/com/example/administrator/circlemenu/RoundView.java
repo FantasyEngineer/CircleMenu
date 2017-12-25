@@ -4,12 +4,15 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Shader;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
@@ -33,6 +36,7 @@ public class RoundView extends View {
 
     private List<RoundMenu> roundMenus;//菜单列表
     private float deviationDegree;//偏移角度
+    private float blackDegree = 1;//每个扇形之间的空白角度
     private int onClickState = -2;//-2是无点击，-1是点击中心圆，其他是点击菜单
     private boolean isCoreMenu = false;//是否画中心圆
 
@@ -80,13 +84,29 @@ public class RoundView extends View {
         i++;
         deviationDegree = 0;//偏移角度(以x轴正方向的位置为起始点，顺时针画扇形)
         coreX = getWidth();
-        coreY = getHeight();
+        coreY = getWidth();
         roundRadius = (int) (getWidth() / 2 * radiusDistance);//计算中心圆圈半径
 
-        RectF rect = new RectF(0, 0, getWidth(), getHeight());
+        //画图片背景
+        paint = new Paint();
+        Bitmap bitmap = drawable2Bitmap(getResources().getDrawable(R.drawable.bg_circle2));
+        Bitmap newBmp = Bitmap.createScaledBitmap(bitmap, coreX, coreX, true);
+        //初始化BitmapShader，传入bitmap对象
+        BitmapShader bitmapShader = new BitmapShader(newBmp, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+//        //计算缩放比例
+//        float mScale = (coreX) / Math.min(bitmap.getHeight(), bitmap.getWidth());
+//        Matrix matrix = new Matrix();
+//        matrix.setScale(mScale + 1, mScale + 1);
+//        bitmapShader.setLocalMatrix(matrix);
+        paint.setShader(bitmapShader);
+        //画圆形，指定好中心点坐标、半径、画笔
+        canvas.drawCircle(coreX / 2, coreX / 2, coreX / 2, paint);
+
+
+        RectF rect = new RectF(0, 0, coreX, coreY);
         //画菜单
         if (roundMenus != null && roundMenus.size() > 0) {
-            float sweepAngle = 360 / roundMenus.size();//每个弧形的角度
+            float sweepAngle = (360 - blackDegree * roundMenus.size()) / roundMenus.size();//每个弧形的角度（需要减去空白的区域）
             for (int i = 0; i < roundMenus.size(); i++) {
                 RoundMenu roundMenu = roundMenus.get(i);
                 //填充
@@ -100,8 +120,7 @@ public class RoundView extends View {
                     //未选中
                     paint.setColor(roundMenu.solidColor);
                 }
-                canvas.drawArc(rect, deviationDegree + (i * sweepAngle), sweepAngle, true, paint);//画圆的起始位置为x轴正坐标
-
+                canvas.drawArc(rect, deviationDegree + i * (sweepAngle + blackDegree), sweepAngle, true, paint);//画圆的起始位置为x轴正坐标
                 //画描边
 //                paint.setAntiAlias(true);
 //                paint.setStrokeWidth(roundMenu.strokeSize);
@@ -178,8 +197,8 @@ public class RoundView extends View {
     private void drawText(String text, Canvas canvas, float sweepAngle, int i, Paint paint) {
         int radius = getWidth() / 2;
         //圆心坐标
-        int centerX = getWidth() / 2;
-        int centerY = getHeight() / 2;
+        int centerX = coreX / 2;
+        int centerY = coreY / 2;
         Log.d("RoundViewcenterX", centerX + "=====" + centerY);
 
         float textAngle = deviationDegree + (i * sweepAngle);    //计算文字位置角度
@@ -207,40 +226,15 @@ public class RoundView extends View {
         } else if (textCurrentY >= coreY * 3 / 4) {
             textCurrentY -= rectText.height() * 2;//坐标校正
         }
-//        if (textCurrentY > 3 / 4 * coreY) {//如果竖直方向绘制文字太偏下，或者太偏上的时候，对坐标进行校正
-//            textCurrentY = textCurrentY - 1 / 4 * coreY;
-//            Log.d("RoundView", "太偏下");
-//        } else if (textCurrentY < 1 / 4 * coreY) {
-//            textCurrentY = textCurrentY + 1 / 4 * coreY;
-//            Log.d("RoundView", "太偏上");
-//        }
 
+        //给每个扇形上增加图
         canvas.drawText(text, textCurrentX, textCurrentY, paint);    //绘制文字
-
-//        if (i == roundMenus.size() - 1) {
-//            endTextX = textCurrentX;
-//            endTextY = textCurrentY;
-//        }
+        Matrix matrix = new Matrix();
+        matrix.postTranslate(textCurrentX, textCurrentY);
+        canvas.drawBitmap(drawable2Bitmap(getResources().getDrawable(R.drawable.icon_sun)), matrix, null);
 
         lastX1 = x1;
         lastY1 = y1;
-//        Log.d("RoundView", x1 + "=====" + y1);
-//        if (x1 >= radius && y1 >= radius) {
-//            x1 -= 20;
-//            y1 -= 20;
-//        } else if (x1 >= radius && y1 <= radius) {
-//            x1 -= 20;
-//            y1 += 20;
-//        } else if (x1 <= radius && y1 >= radius) {
-//            x1 += 20;
-//            y1 -= 20;
-//        } else {
-//            x1 += 20;
-//            y1 += 20;
-//        }
-//        paint.setColor(Color.BLACK);        //文字颜色
-//        paint.setTextSize(19);
-//        canvas.drawText("名字", (float) x1, (float) y1, paint);    //绘制文字
     }
 
     @Override
@@ -324,12 +318,12 @@ public class RoundView extends View {
         public String text;//扇形区域上的字
     }
 
-
-    public Bitmap drawable2Bitmap(int resID) {
-        Resources res = getResources();
-        Bitmap bmp = BitmapFactory.decodeResource(res, resID);
-        return bmp;
-    }
+//
+//    public Bitmap drawable2Bitmap(int resID) {
+//        Resources res = getResources();
+//        Bitmap bmp = BitmapFactory.decodeResource(res, resID);
+//        return bmp;
+//    }
 
     /**
      * 添加中心菜单按钮 * * @param coreMenuColor * @param coreMenuSelectColor * @param onClickListener
@@ -428,4 +422,25 @@ public class RoundView extends View {
         this.mOnMenuItemClickListener = mOnMenuItemClickListener;
     }
 
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        //设置自定义view的宽高相等
+        heightMeasureSpec = widthMeasureSpec;
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
+    //写一个drawble转BitMap的方法
+    private Bitmap drawable2Bitmap(Drawable drawable) {
+        if (drawable instanceof BitmapDrawable) {
+            BitmapDrawable bd = (BitmapDrawable) drawable;
+            return bd.getBitmap();
+        }
+        int w = drawable.getIntrinsicWidth();
+        int h = drawable.getIntrinsicHeight();
+        Bitmap bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, w, h);
+        drawable.draw(canvas);
+        return bitmap;
+    }
 }

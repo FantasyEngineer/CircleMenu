@@ -9,13 +9,14 @@
 
     <com.example.administrator.circlemenu.RoundView
         android:id="@+id/roundView"
-        android:layout_width="150dp"
-        android:layout_height="150dp"/>
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"/>
 
-    <com.example.administrator.circlemenu.TestCircle
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:visibility="gone"/>
+    <!--<com.example.administrator.circlemenu.TestCircle-->
+    <!--android:layout_width="50dp"-->
+    <!--android:layout_height="50dp"-->
+    <!--android:visibility="gone"/>-->
 
 
 </LinearLayout>
