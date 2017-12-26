@@ -2,19 +2,20 @@ package com.example.administrator.circlemenu;
 
 import android.content.Context;
 import android.graphics.Point;
-import android.icu.util.IslamicCalendar;
 import android.support.v4.widget.ViewDragHelper;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+
+import com.example.administrator.circlemenu.util.ToastUtil;
 
 /**
  * 可滑动的customlayout
  */
 public class CustomLayout extends RelativeLayout {
+    private Context context;
     private ViewDragHelper mDragger;
 
     private View mAutoBackView;
@@ -23,8 +24,9 @@ public class CustomLayout extends RelativeLayout {
     private CircleMenuLayout circleMenuLayout;//圆圈
     private boolean isRelease = true;
 
-    public CustomLayout(Context context, AttributeSet attrs) {
+    public CustomLayout(final Context context, AttributeSet attrs) {
         super(context, attrs);
+        this.context = context;
         mDragger = ViewDragHelper.create(this, 1.0f, new ViewDragHelper.Callback() {
             @Override
             public boolean tryCaptureView(View child, int pointerId) {
@@ -86,10 +88,18 @@ public class CustomLayout extends RelativeLayout {
             public void onViewPositionChanged(View changedView, int left, int top, int dx, int dy) {
                 if (isRelease) {//释放的时候点的位置
                     isRelease = false;
-                    if (getDisForTwoSpot(left, top, centerX, centerY) < radius) {
-                        Log.d("CustomLayout", "在圆内松手的");
+
+                    //点击的是某个扇形；按下点到中心点的距离大于中心圆半径小于大圆半径，那就是点击某个扇形了
+                    float sweepAngle = 360 / 8;//每个弧形的角度
+                    int angle = getRotationBetweenLines(centerX, centerX, left, top);
+                    //这个angle的角度是从正Y轴开始，而我们的扇形是从正X轴开始，再加上偏移角度，所以需要计算一下
+                    angle = (angle + 360) % 360;
+                    int onClickState = (int) (angle / sweepAngle);//根据角度得出点击的是那个扇形
+                    if (getDisForTwoSpot(centerX, centerY, left, top) <= radius
+                            && getDisForTwoSpot(centerX, centerY, left, top) >= circleMenuLayout.getCenterRadius()) {
+                        ToastUtil.show(context, "在圆环内" + onClickState);
                     } else {
-                        Log.d("CustomLayout", "在圆外松手的");
+                        ToastUtil.show(context, "在圆外或者圆心");
                     }
                 }
                 super.onViewPositionChanged(changedView, left, top, dx, dy);
@@ -148,6 +158,7 @@ public class CustomLayout extends RelativeLayout {
         if (mAutoBackView != null) {
             mAutoBackOriginPos.x = mAutoBackView.getLeft();
             mAutoBackOriginPos.y = mAutoBackView.getTop();
+            Log.d("CustomLayout", "mAutoBackView.getBottom():" + mAutoBackView.getBottom());
         }
         //获取圆心位置，获取半径，获取坐标
         if (circleMenuLayout != null) {
@@ -197,7 +208,37 @@ public class CustomLayout extends RelativeLayout {
         return Math.sqrt((width * width) + (height * height));
     }
 
+
+    /**
+     * 获取两条线的夹角 * * @param centerX * @param centerY * @param xInView * @param yInView * @return
+     */
+    public static int getRotationBetweenLines(float centerX, float centerY, float xInView, float yInView) {
+        double rotation = 0;
+
+        double k1 = (double) (centerY - centerY) / (centerX * 2 - centerX);
+        double k2 = (double) (yInView - centerY) / (xInView - centerX);
+        double tmpDegree = Math.atan((Math.abs(k1 - k2)) / (1 + k1 * k2)) / Math.PI * 180;
+
+        if (xInView > centerX && yInView < centerY) {  //第一象限
+            rotation = 90 - tmpDegree;
+        } else if (xInView > centerX && yInView > centerY) //第二象限
+        {
+            rotation = 90 + tmpDegree;
+        } else if (xInView < centerX && yInView > centerY) { //第三象限
+            rotation = 270 - tmpDegree;
+        } else if (xInView < centerX && yInView < centerY) { //第四象限
+            rotation = 270 + tmpDegree;
+        } else if (xInView == centerX && yInView < centerY) {
+            rotation = 0;
+        } else if (xInView == centerX && yInView > centerY) {
+            rotation = 180;
+        }
+        return (int) rotation;
+    }
+
 }
+
+
 
 /*
 -------------------------->回调顺序

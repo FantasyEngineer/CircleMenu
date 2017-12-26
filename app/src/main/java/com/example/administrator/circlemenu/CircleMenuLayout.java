@@ -5,7 +5,6 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.content.Context;
-import android.text.Html;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -15,7 +14,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -26,6 +24,8 @@ import java.util.ArrayList;
  */
 public class CircleMenuLayout extends ViewGroup {
     private int mRadius;
+
+    private float mRadiusCenter;
     /**
      * 该容器内child item的默认尺寸
      */
@@ -45,7 +45,7 @@ public class CircleMenuLayout extends ViewGroup {
     /**
      * 布局时的开始角度
      */
-    private double mStartAngle = 25.5 - 90d;
+    private double mStartAngle = 25.5 - 95d;
     /**
      * 菜单项的文本
      */
@@ -66,10 +66,9 @@ public class CircleMenuLayout extends ViewGroup {
 
     private int mMenuItemLayoutId = R.layout.circle_menu_item;
     //使用屏幕的宽度减去下面这个值为layout的实际宽度
-    public static int blankMargin = 50;
+    public static int blankMargin = 0;
 
     private ArrayList<View> imageViewList = new ArrayList<>();
-    private View newItem;
 
     public CircleMenuLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -209,7 +208,8 @@ public class CircleMenuLayout extends ViewGroup {
             mStartAngle %= 360;
 
             // 计算，中心点到menu item中心的距离
-            float tmp = layoutRadius / 2f - cWidth / 10 - mPadding;
+//            float tmp = layoutRadius / 2f - cWidth / 15 - mPadding;
+            float tmp = layoutRadius / 2f - mPadding;
             Log.d("CircleMenuLayout", "tmp:" + tmp);
 
             // tmp cosa 即menu item中心点的横坐标
@@ -245,7 +245,8 @@ public class CircleMenuLayout extends ViewGroup {
             // 设置center item位置
             int cl = layoutRadius / 2 - cView.getMeasuredWidth() / 2;
             int cr = cl + cView.getMeasuredWidth();
-            cView.layout(cl, cl, cr, cr);
+            cView.layout(cl, cl, cr, cr);//正方形
+            mRadiusCenter = (cr - cl) / 2;//内圆圆心
         }
     }
 
@@ -501,6 +502,10 @@ public class CircleMenuLayout extends ViewGroup {
             }
         }
 
+    }
+
+    public float getCenterRadius() {
+        return mRadiusCenter;
     }
 
 
