@@ -1,8 +1,9 @@
 <com.example.administrator.circlemenu.CustomLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#ffffffff"
-    android:orientation="horizontal">
+                                                   android:id="@+id/customLayout"
+                                                   android:layout_width="match_parent"
+                                                   android:layout_height="match_parent"
+                                                   android:background="#ffffffff"
+                                                   android:orientation="horizontal">
 
 
     <com.example.administrator.circlemenu.CircleMenuLayout
@@ -10,7 +11,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/new_item"
-        android:background="@drawable/bg_5">
+        android:layout_centerHorizontal="true"
+        android:layout_margin="20dp"
+        android:background="@drawable/bg5">
 
         <RelativeLayout
             android:id="@id/id_circle_menu_item_center"
@@ -21,13 +24,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_centerInParent="true"
-                android:background="@null" />
+                android:background="@null"/>
 
             <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_centerInParent="true"
-                android:background="@null" />
+                android:background="@drawable/icon_center"/>
         </RelativeLayout>
     </com.example.administrator.circlemenu.CircleMenuLayout>
 
@@ -36,14 +39,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@+id/stop_shake"
-        android:text="图片震动" />
+        android:text="图片震动"/>
 
     <Button
         android:id="@+id/stop_shake"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:text="停止震动" />
+        android:text="停止震动"/>
 
     <TextView
         android:id="@+id/new_item"
@@ -53,5 +56,5 @@
         android:layout_marginTop="20dp"
         android:background="@color/colorAccent"
         android:text="新增项"
-        android:visibility="visible" />
+        android:visibility="visible"/>
 </com.example.administrator.circlemenu.CustomLayout>

@@ -89,7 +89,7 @@ public class RoundView extends View {
 
         //画图片背景
         paint = new Paint();
-        Bitmap bitmap = drawable2Bitmap(getResources().getDrawable(R.drawable.bg_circle2));
+        Bitmap bitmap = drawable2Bitmap(getResources().getDrawable(R.drawable.bg5));
         Bitmap newBmp = Bitmap.createScaledBitmap(bitmap, coreX, coreX, true);
         //初始化BitmapShader，传入bitmap对象
         BitmapShader bitmapShader = new BitmapShader(newBmp, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
@@ -309,7 +309,7 @@ public class RoundView extends View {
     public static class RoundMenu {
         public boolean useCenter = true;//扇形是否画连接中心点的直线
         public int solidColor = 0x00000000;//背景颜色,默认透明
-        public int selectSolidColor = 0x00000000;//背景颜色,默认透明
+        public int selectSolidColor = 0x33000000;//背景颜色,默认透明
         public int strokeColor = 0x00000000;//描边颜色,默认透明
         public int strokeSize = 1;//描边的宽度,默认1
         public int resID;//菜单的res R.drawable.

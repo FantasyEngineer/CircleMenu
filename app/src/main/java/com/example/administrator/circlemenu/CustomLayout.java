@@ -11,18 +11,20 @@ import android.widget.RelativeLayout;
 
 import com.example.administrator.circlemenu.util.ToastUtil;
 
+import static com.example.administrator.circlemenu.CircleMenuLayout.RADIO_DEFAULT_CENTERITEM_DIMENSION;
+
 /**
  * 可滑动的customlayout
  */
 public class CustomLayout extends RelativeLayout {
     private Context context;
     private ViewDragHelper mDragger;
-
     private View mAutoBackView;
-
     private Point mAutoBackOriginPos = new Point();
     private CircleMenuLayout circleMenuLayout;//圆圈
     private boolean isRelease = true;
+    private boolean isInRing = false;//在圆环内吗？
+    private customLayoutListener mCustomLayoutListener;
 
     public CustomLayout(final Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -32,8 +34,10 @@ public class CustomLayout extends RelativeLayout {
             public boolean tryCaptureView(View child, int pointerId) {
                 Log.d("回调顺序", "tryCaptureView");
                 //开始移动的时候,开始震动
-                isRelease = false;
-                circleMenuLayout.startShake();
+                if (child == mAutoBackView) {
+                    isRelease = false;
+                    circleMenuLayout.startShake();
+                }
                 //mEdgeTrackerView禁止直接移动
                 return child == mAutoBackView;
             }
@@ -49,13 +53,13 @@ public class CustomLayout extends RelativeLayout {
             }
 
 
-            //手指释放的时候回调
+            //手指释放的时候回调(xvel与yvel是速率)
             @Override
             public void onViewReleased(View releasedChild, float xvel, float yvel) {
                 //mAutoBackView手指释放时可以自动回去
                 //停止震动
-                circleMenuLayout.stopShake();
                 if (releasedChild == mAutoBackView) {
+                    circleMenuLayout.stopShake();
                     isRelease = true;
                     mDragger.settleCapturedViewAt(mAutoBackOriginPos.x, mAutoBackOriginPos.y);
                     invalidate();
@@ -80,26 +84,45 @@ public class CustomLayout extends RelativeLayout {
 
             @Override
             public void onViewDragStateChanged(int state) {
+                Log.d("CustomLayout", "state:" + state);
                 super.onViewDragStateChanged(state);
             }
 
             //移动的时候坐标
             @Override
             public void onViewPositionChanged(View changedView, int left, int top, int dx, int dy) {
-                if (isRelease) {//释放的时候点的位置
+                Log.d("CustomLayout", left + "||||" + top);
+                if (changedView == mAutoBackView && isRelease) {//释放的时候点的位置
                     isRelease = false;
-
                     //点击的是某个扇形；按下点到中心点的距离大于中心圆半径小于大圆半径，那就是点击某个扇形了
-                    float sweepAngle = 360 / 8;//每个弧形的角度
+                    float sweepAngle = 45;//每个弧形的角度
                     int angle = getRotationBetweenLines(centerX, centerX, left, top);
-                    //这个angle的角度是从正Y轴开始，而我们的扇形是从正X轴开始，再加上偏移角度，所以需要计算一下
+//                    Log.d("CustomLayout", "angle:" + angle);
+                    //这个angle的角度是从正Y轴开始
                     angle = (angle + 360) % 360;
+//                    Log.d("CustomLayout", "angle:" + angle);
                     int onClickState = (int) (angle / sweepAngle);//根据角度得出点击的是那个扇形
-                    if (getDisForTwoSpot(centerX, centerY, left, top) <= radius
-                            && getDisForTwoSpot(centerX, centerY, left, top) >= circleMenuLayout.getCenterRadius()) {
-                        ToastUtil.show(context, "在圆环内" + onClickState);
+//                    Log.d("CustomLayout", centerX + "=====centerY========" + centerY);
+//                    Log.d("CustomLayout", left + "====top=========" + top);
+//                    Log.d("CustomLayout", radius + "======CenterRadius=======" + CenterRadius);
+//                    Log.d("CustomLayout", "getDisForTwoSpot(centerX, centerY, left, top):" + getDisForTwoSpot(centerX, centerY, left, top));
+                    if (getDisForTwoSpot(centerX, centerY, left, top) <= radius) {
+                        if (getDisForTwoSpot(centerX, centerY, left, top) >= CenterRadius - 50) {
+                            changedView.setVisibility(INVISIBLE);
+                            if (mCustomLayoutListener != null) {
+                                mCustomLayoutListener.onRingRelease(onClickState);
+                            }
+                        } else {
+                            changedView.setVisibility(VISIBLE);
+                            if (mCustomLayoutListener != null) {
+                                mCustomLayoutListener.outRingRelease();
+                            }
+                        }
                     } else {
-                        ToastUtil.show(context, "在圆外或者圆心");
+                        changedView.setVisibility(VISIBLE);
+                        if (mCustomLayoutListener != null) {
+                            mCustomLayoutListener.outRingRelease();
+                        }
                     }
                 }
                 super.onViewPositionChanged(changedView, left, top, dx, dy);
@@ -108,7 +131,6 @@ public class CustomLayout extends RelativeLayout {
             //当captureview被捕获时回调
             @Override
             public void onViewCaptured(View capturedChild, int activePointerId) {
-
                 super.onViewCaptured(capturedChild, activePointerId);
             }
 
@@ -162,18 +184,32 @@ public class CustomLayout extends RelativeLayout {
         }
         //获取圆心位置，获取半径，获取坐标
         if (circleMenuLayout != null) {
+            //大圆半径
             radius = circleMenuLayout.getWidth() / 2;
+            Log.d("CustomLayout", "radius:" + radius);
+            //中心圆半径
+            CenterRadius = radius * RADIO_DEFAULT_CENTERITEM_DIMENSION;
+            Log.d("CustomLayout", "CenterRadius:" + CenterRadius);
+
+            //左上角坐标
             leftTopX = circleMenuLayout.getLeft();
             leftTopY = circleMenuLayout.getTop();
+            //右下角坐标
             rightBottomX = circleMenuLayout.getLeft() + circleMenuLayout.getWidth();
             rightBottomY = circleMenuLayout.getTop() + circleMenuLayout.getWidth();
-            centerX = leftTopX + radius;
-            centerY = leftTopY + radius - CircleMenuLayout.blankMargin / 2;
+            //圆心坐标
+            centerX = (rightBottomX + leftTopX) / 2;
+            centerY = (leftTopY + rightBottomY) / 2;
+            Log.d("CustomLayout", "leftTopX:" + leftTopX);
+            Log.d("CustomLayout", "leftTopY:" + leftTopY);
+            Log.d("CustomLayout", "rightBottomX:" + rightBottomX);
+            Log.d("CustomLayout", "rightBottomY:" + rightBottomY);
         }
     }
 
     //半径
     private float radius = 0;
+    private float CenterRadius = 0;
     float leftTopX, leftTopY, rightBottomX, rightBottomY, centerX, centerY;
 
     @Override
@@ -208,7 +244,6 @@ public class CustomLayout extends RelativeLayout {
         return Math.sqrt((width * width) + (height * height));
     }
 
-
     /**
      * 获取两条线的夹角 * * @param centerX * @param centerY * @param xInView * @param yInView * @return
      */
@@ -234,6 +269,21 @@ public class CustomLayout extends RelativeLayout {
             rotation = 180;
         }
         return (int) rotation;
+    }
+
+    public customLayoutListener getCustomLayoutListener() {
+        return mCustomLayoutListener;
+    }
+
+    public void setCustomLayoutListener(customLayoutListener customLayoutListener) {
+        mCustomLayoutListener = customLayoutListener;
+    }
+
+
+    public interface customLayoutListener {
+        void onRingRelease(int location);//在圆环上松手
+
+        void outRingRelease();
     }
 
 }

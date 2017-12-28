@@ -5,6 +5,10 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -33,7 +37,7 @@ public class CircleMenuLayout extends ViewGroup {
     /**
      * 菜单的中心child的默认尺寸
      */
-    private float RADIO_DEFAULT_CENTERITEM_DIMENSION = 3 / 5f;
+    public static float RADIO_DEFAULT_CENTERITEM_DIMENSION = 0.66f;
     /**
      * 该容器的内边距,无视padding属性，如需边距请用该变量
      */
@@ -45,7 +49,7 @@ public class CircleMenuLayout extends ViewGroup {
     /**
      * 布局时的开始角度
      */
-    private double mStartAngle = 25.5 - 95d;
+    public static double mStartAngle = 20.5 - 90d;
     /**
      * 菜单项的文本
      */
@@ -76,41 +80,70 @@ public class CircleMenuLayout extends ViewGroup {
         setPadding(0, 0, 0, 0);
     }
 
+    private Paint paint;
+    private float blackDegree = 1;//每个扇形之间的空白角度
+    private float deviationDegree;//偏移角度
+    //宽高
+    private int coreX, coreY;
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        paint = new Paint();
+        deviationDegree = 0;//偏移角度(以x轴正方向的位置为起始点，顺时针画扇形)
+        coreX = getWidth();
+        coreY = getWidth();
+        //画圆形，指定好中心点坐标、半径、画笔
+        canvas.drawCircle(coreX / 2, coreX / 2, coreX / 2, paint);
+
+
+        RectF rect = new RectF(0, 0, coreX, coreY);
+        //画菜单
+        float sweepAngle = 45;//每个弧形的角度（需要减去空白的区域）
+        for (int i = 0; i < 8; i++) {
+            //填充
+            paint = new Paint();
+            //抗锯齿
+            paint.setAntiAlias(true);
+            paint.setColor(0x00000000);
+            canvas.drawArc(rect, deviationDegree + i * (sweepAngle + blackDegree), sweepAngle, true, paint);//画圆的起始位置为x轴正坐标
+        }
+
+    }
+
     /**
      * 设置布局的宽高，并策略menu item宽高
      */
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int resWidth = 0;
-        int resHeight = 0;
-        /**
-         * 根据传入的参数，分别获取测量模式和测量值
-         */
-        int width = MeasureSpec.getSize(widthMeasureSpec);
-        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
-
-        int height = MeasureSpec.getSize(heightMeasureSpec);
-        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-
-        /**
-         * 如果宽或者高的测量模式非精确值
-         */
-        if (widthMode != MeasureSpec.EXACTLY
-                || heightMode != MeasureSpec.EXACTLY) {
-            // 主要设置为背景图的高度
-//            resWidth = getSuggestedMinimumWidth();
-            // 如果未设置背景图片，则设置为屏幕宽高的默认值
-            resWidth = resWidth == 0 ? getDefaultWidth() - blankMargin : resWidth;
-
-//            resHeight = getSuggestedMinimumHeight();
-            // 如果未设置背景图片，则设置为屏幕宽高的默认值
-            resHeight = resHeight == 0 ? getDefaultWidth() - blankMargin : resHeight;
-        } else {
-            // 如果都设置为精确值，则直接取小值；
-            resWidth = resHeight = Math.min(width, height);
-        }
-
-        setMeasuredDimension(resWidth, resHeight);//确定viewgroup的大小
+//        /**
+//         * 根据传入的参数，分别获取测量模式和测量值
+//         */
+//        int width = MeasureSpec.getSize(widthMeasureSpec);
+//        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+//
+//        int height = MeasureSpec.getSize(heightMeasureSpec);
+//        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+//
+//        /**
+//         * 如果宽或者高的测量模式非精确值
+//         */
+//        if (widthMode != MeasureSpec.EXACTLY
+//                || heightMode != MeasureSpec.EXACTLY) {
+//            // 主要设置为背景图的高度
+////            resWidth = getSuggestedMinimumWidth();
+//            // 如果未设置背景图片，则设置为屏幕宽高的默认值
+//            resWidth = resWidth == 0 ? getDefaultWidth() - blankMargin : resWidth;
+//
+////            resHeight = getSuggestedMinimumHeight();
+//            // 如果未设置背景图片，则设置为屏幕宽高的默认值
+//            resHeight = resHeight == 0 ? getDefaultWidth() - blankMargin : resHeight;
+//        } else {
+//            // 如果都设置为精确值，则直接取小值；
+//            resWidth = resHeight = Math.min(width, height);
+//        }
+        heightMeasureSpec = widthMeasureSpec;
+        setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);//确定viewgroup的大小
 
         // 获得半径
         mRadius = Math.min(getMeasuredWidth(), getMeasuredHeight());
@@ -160,6 +193,7 @@ public class CircleMenuLayout extends ViewGroup {
         void itemClick(View view, int pos);
 
         void itemCenterClick(View view);
+
     }
 
     /**

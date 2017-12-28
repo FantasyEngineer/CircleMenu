@@ -2,12 +2,17 @@ package com.example.administrator.circlemenu;
 
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.example.administrator.circlemenu.util.ToastUtil;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -27,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
             0, 0,
             0};
     private Button shake;
+    private CustomLayout customLayout;
+    private TextView new_item;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
         //自已切换布局文件看效果
         setContentView(R.layout.activity_main);
         mCircleMenuLayout = (CircleMenuLayout) findViewById(R.id.id_menulayout);
+        customLayout = (CustomLayout) findViewById(R.id.customLayout);
+        new_item = (TextView) findViewById(R.id.new_item);
         mCircleMenuLayout.setMenuItemIconsAndTexts(mItemImgs, mItemTexts);
         mCircleMenuLayout.setMenuItemIconsPress(mItemImgsPress);
         mCircleMenuLayout.setOnMenuItemClickListener(new CircleMenuLayout.OnMenuItemClickListener() {
@@ -43,7 +52,6 @@ public class MainActivity extends AppCompatActivity {
             public void itemClick(View view, int pos) {
                 Toast.makeText(MainActivity.this, mItemTexts[pos],
                         Toast.LENGTH_SHORT).show();
-
             }
 
             @Override
@@ -56,6 +64,19 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+        customLayout.setCustomLayoutListener(new CustomLayout.customLayoutListener() {
+            @Override
+            public void onRingRelease(int location) {
+                ToastUtil.show(MainActivity.this, location + "");
+                showAlert();
+            }
+
+            @Override
+            public void outRingRelease() {
+
+            }
+        });
+
         shake = (Button) findViewById(R.id.shake);
         //震动布局监听
         findViewById(R.id.shake).setOnClickListener(new View.OnClickListener() {
@@ -71,7 +92,26 @@ public class MainActivity extends AppCompatActivity {
                 mCircleMenuLayout.stopShake();
             }
         });
+    }
 
+    private void showAlert() {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
+        alertDialog.setTitle("提示");
+        alertDialog.setMessage("是否替换该项???");
+        alertDialog.setNegativeButton("确定", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+        alertDialog.setPositiveButton("取消", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                new_item.setVisibility(View.VISIBLE);
+            }
+        });
+        alertDialog.create();
+        alertDialog.show();
     }
 
 }
